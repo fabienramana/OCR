@@ -1,21 +1,18 @@
 package com.cleancode.OCR;
 
 import java.io.*;
-import java.lang.reflect.Array;
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main { //Mettre variable en francais ou en anglais
 
     public static void main(String[] args) {
-        String pathname = "src/main/java/com/cleancode/OCR/input.txt";
+        String pathname = "src/main/java/com/cleancode/OCR/input4.txt";
         try {
             File myObj = new File(pathname);
             int lignSize = (int) (myObj.length()/27);
             char[][] myArray= new char[lignSize][29];
-            int[] resultArray = new int[9];
-            for(int k=0;k<9;k++){
-                resultArray[k] = -1;
-            }
+            List<Integer> resultArray = new ArrayList<>();
 
             FileReader fr = new FileReader(myObj);
             BufferedReader br=new BufferedReader(fr);
@@ -35,7 +32,7 @@ public class Main { //Mettre variable en francais ou en anglais
                     j+=1;
                 }
             }
-            int result = 9;
+            //RECONNAISSANCE DES NUMEROS
             for(i = 0;i<lignSize;i++){
                 for(j=0;j<29;j++){
                     if(i==0 || i%4 == 0) {
@@ -43,19 +40,66 @@ public class Main { //Mettre variable en francais ou en anglais
                             continue;
                         }
                         if (j == 0 || j % 3 == 0) {
-                            System.out.println(guessNumber(myArray, i, j));
+                            resultArray.add(guessNumber(myArray, i, j));
                         }
                     }
                 }
             }
+            for(Integer a : resultArray){
+                System.out.println(a);
+            }
+
+            int total = calculateChecksum(resultArray);
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter("src/main/java/com/cleancode/OCR/result.txt"));
+            int k=0;
+            boolean isIllisible = false;
+            for(Integer a : resultArray){
+                if(a == -1){
+                    writer.write("?");
+                    isIllisible = true;
+                }
+                else{
+                    writer.write(String.valueOf(a));    
+                }
+                
+                k++;
+                if(k%9 == 0){
+                    if(isIllisible == false){
+                        List<Integer> subArray = new ArrayList<>();
+                        subArray.add(resultArray.get(k-9));
+                        subArray.add(resultArray.get(k-8));
+                        subArray.add(resultArray.get(k-7));
+                        subArray.add(resultArray.get(k-6));
+                        subArray.add(resultArray.get(k-5));
+                        subArray.add(resultArray.get(k-4));
+                        subArray.add(resultArray.get(k-3));
+                        subArray.add(resultArray.get(k-2));
+                        subArray.add(resultArray.get(k-1));
+                        
+                        total = calculateChecksum(subArray);
+                        if(total != 0){
+                            writer.write(" ERR");
+                        }
+                    } else {
+                        writer.write(" ILL");
+                    }
+                    writer.write("\n");
+                    isIllisible = false;
+                }
+            }
             
+            writer.close();
         } catch (Exception e) {
             System.out.println("An error occurred.");
             e.printStackTrace();
         }
     }
 
-
+    public static Integer calculateChecksum(List<Integer> a){
+        return (9*a.get(0)+8*a.get(1)+7*a.get(2)+6*a.get(3)+5*a.get(4)+4*a.get(5)+3*a.get(6)+2*a.get(7)+a.get(8))%11;
+    }
+    
     public static int guessNumber(char[][] c, int ligne, int colonne){
         if(isEight(c,ligne,colonne)){
             return 8;
@@ -95,84 +139,92 @@ public class Main { //Mettre variable en francais ou en anglais
         if(ligne+2 >= c.length || colonne+2 >= c[0].length){
             return false;
         }
-        if(c[ligne+1][colonne+2] == '|' && c[ligne+2][colonne+2] == '|'){
+        if(c[ligne][colonne] == ' ' && c[ligne][colonne+1] == ' ' &&  c[ligne][colonne+2] == ' ' 
+                && c[ligne+1][colonne] == ' ' && c[ligne+1][colonne+1] == ' ' && c[ligne+1][colonne+2] == '|' 
+                && c[ligne+2][colonne] == ' ' && c[ligne+2][colonne+1] == ' ' && c[ligne+2][colonne+2] == '|'){
             return true;
         }
         return false;
     }
 
     public static boolean isTwo(char[][] c, int ligne, int colonne){
-        if(ligne+1 >= c.length || ligne+2 >= c.length || colonne+1 >= c[0].length){
+        if(ligne+2 >= c.length || colonne+2 >= c[0].length){
             return false;
         }
-        if(c[ligne][colonne+1] == '_' && c[ligne+1][colonne+2] == '|'
-                && c[ligne+1][colonne+1] == '_' && c[ligne+2][colonne] == '|' && c[ligne+2][colonne+1] == '_'){
+        if(c[ligne][colonne] == ' ' && c[ligne][colonne+1] == '_' && c[ligne][colonne+2] == ' '
+                && c[ligne+1][colonne] == ' ' && c[ligne+1][colonne+1] == '_' && c[ligne+1][colonne+2] == '|' 
+                && c[ligne+2][colonne] == '|' && c[ligne+2][colonne+1] == '_' && c[ligne+2][colonne+2] == ' '){
             return true;
         }
         return false;
     }
 
     public static boolean isThree(char[][] c, int ligne, int colonne){
-        if(ligne+1 >= c.length || ligne+2 >= c.length || colonne+1 >= c[0].length){
+        if(ligne+2 >= c.length || colonne+2 >= c[0].length){
             return false;
         }
-        if(c[ligne][colonne+1] == '_' && c[ligne+1][colonne+2] == '|'
-                && c[ligne+1][colonne+1] == '_' && c[ligne+2][colonne+2] == '|' && c[ligne+2][colonne+1] == '_'){
+        if(c[ligne][colonne] == ' ' && c[ligne][colonne+1] == '_' && c[ligne][colonne+2] == ' '
+                && c[ligne+1][colonne] == ' ' && c[ligne+1][colonne+1] == '_' && c[ligne+1][colonne+2] == '|'
+                && c[ligne+2][colonne] == ' ' && c[ligne+2][colonne+1] == '_' && c[ligne+2][colonne+2] == '|'){
             return true;
         }
         return false;
     }
 
     public static boolean isFour(char[][] c, int ligne, int colonne){
-        if(ligne+1 >= c.length || colonne+2 >= c[0].length || colonne+1 >= c[0].length){
+        if(ligne+2 >= c.length || colonne+2 >= c[0].length){
             return false;
         }
-        if(c[ligne+1][colonne] == '|' && c[ligne+1][colonne+1] == '_'
-                && c[ligne+1][colonne+2] == '|' && c[ligne+2][colonne+2] == '|'){
+        if(c[ligne][colonne] == ' ' && c[ligne][colonne+1] == ' ' && c[ligne][colonne+2] == ' '
+                && c[ligne+1][colonne] == '|' && c[ligne+1][colonne+1] == '_' && c[ligne+1][colonne+2] == '|'
+                && c[ligne+2][colonne] == ' ' && c[ligne+2][colonne+1] == ' ' && c[ligne+2][colonne+2] == '|'){
             return true;
         }
         return false;
     }
 
     public static boolean isFive(char[][] c, int ligne, int colonne){
-        if(ligne+1 >= c.length || ligne+2 >= c.length || colonne+1 >= c[0].length){
+        if(ligne+2 >= c.length || colonne+2 >= c[0].length){
             return false;
         }
-        if(c[ligne][colonne+1] == '_' && c[ligne+1][colonne] == '|'
-                && c[ligne+1][colonne+1] == '_' && c[ligne+2][colonne+2] == '|' && c[ligne+2][colonne+1] == '_'){
+        if(c[ligne][colonne] == ' ' && c[ligne][colonne+1] == '_' && c[ligne][colonne+2] == ' '
+                && c[ligne+1][colonne] == '|' && c[ligne+1][colonne+1] == '_' && c[ligne+1][colonne+2] == ' '
+                && c[ligne+2][colonne] == ' ' && c[ligne+2][colonne+1] == '_' && c[ligne+2][colonne+2] == '|'){
             return true;
         }
         return false;
     }
 
     public static boolean isSix(char[][] c, int ligne, int colonne){
-        if(ligne+1 >= c.length || ligne+2 >= c.length || colonne+1 >= c[0].length){
+        if(ligne+2 >= c.length || colonne+2 >= c[0].length){
             return false;
         }
-        if(c[ligne][colonne+1] == '_' && c[ligne+1][colonne] == '|'
-                && c[ligne+1][colonne+1] == '_' && c[ligne+2][colonne] == '|' && c[ligne+2][colonne+1] == '_' && c[ligne+2][colonne+2] == '|'){
+        if(c[ligne][colonne] == ' ' && c[ligne][colonne+1] == '_' && c[ligne][colonne+2] == ' '
+                && c[ligne+1][colonne] == '|' && c[ligne+1][colonne+1] == '_' && c[ligne+1][colonne+2] == ' '
+                && c[ligne+2][colonne] == '|' && c[ligne+2][colonne+1] == '_' && c[ligne+2][colonne+2] == '|'){
             return true;
         }
         return false;
     }
 
     public static boolean isSeven(char[][] c, int ligne, int colonne){
-        if(ligne+1 >= c.length || ligne+2 >= c.length || colonne+1 >= c[0].length){
+        if(ligne+2 >= c.length || colonne+2 >= c[0].length){
             return false;
         }
-        if(c[ligne][colonne+1] == '_' && c[ligne+1][colonne+2] == '|'
-                && c[ligne+2][colonne+2] == '|'){
+        if(c[ligne][colonne] == ' ' && c[ligne][colonne+1] == '_' && c[ligne][colonne+2] == ' '
+                && c[ligne+1][colonne] == ' ' && c[ligne+1][colonne+1] == ' ' && c[ligne+1][colonne+2] == '|'
+                && c[ligne+2][colonne] == ' ' && c[ligne+2][colonne+1] == ' ' && c[ligne+2][colonne+2] == '|'){
             return true;
         }
         return false;
     }
 
     public static boolean isEight(char[][] c, int ligne, int colonne){
-        if(ligne+1 >= c.length || ligne+2 >= c.length || colonne+1 >= c[0].length){
+        if(ligne+2 >= c.length || colonne+2 >= c[0].length){
             return false;
         }
-        if(c[ligne][colonne+1] == '_' && c[ligne+1][colonne] == '|'
-                && c[ligne+1][colonne+1] == '_' && c[ligne+1][colonne+2] == '|'
+        if(c[ligne][colonne] == ' ' && c[ligne][colonne+1] == '_' && c[ligne][colonne+2] == ' '
+                && c[ligne+1][colonne] == '|' && c[ligne+1][colonne+1] == '_' && c[ligne+1][colonne+2] == '|'
                 && c[ligne+2][colonne] == '|' && c[ligne+2][colonne+1] == '_' && c[ligne+2][colonne+2] == '|'){
             return true;
         }
@@ -180,77 +232,26 @@ public class Main { //Mettre variable en francais ou en anglais
     }
 
     public static boolean isNine(char[][] c, int ligne, int colonne){
-        if(ligne+1 >= c.length || ligne+2 >= c.length || colonne+1 >= c[0].length){
+        if(ligne+2 >= c.length || colonne+2 >= c[0].length){
             return false;
         }
-        if(c[ligne][colonne+1] == '_' && c[ligne+1][colonne] == '|'
-                && c[ligne+1][colonne+1] == '_' && c[ligne+1][colonne+2] == '|'
-                && c[ligne+2][colonne+1] == '_' && c[ligne+2][colonne+2] == '|'){
+        if(c[ligne][colonne] == ' ' && c[ligne][colonne+1] == '_' && c[ligne][colonne+2] == ' '
+                && c[ligne+1][colonne] == '|' && c[ligne+1][colonne+1] == '_' && c[ligne+1][colonne+2] == '|'
+                && c[ligne+2][colonne] == ' ' && c[ligne+2][colonne+1] == '_' && c[ligne+2][colonne+2] == '|'){
             return true;
         }
         return false;
     }
 
     public static boolean isZero(char[][] c, int ligne, int colonne){
-        if(ligne+1 >= c.length || ligne+2 >= c.length || colonne+1 >= c[0].length){
+        if(ligne+2 >= c.length || colonne+2 >= c[0].length){
             return false;
         }
-        if(c[ligne][colonne+1] == '_' && c[ligne+1][colonne] == '|'
-                && c[ligne+1][colonne+2] == '|' && c[ligne+2][colonne+1] == '|' ){
+        if(c[ligne][colonne] == ' ' && c[ligne][colonne+1] == '_' && c[ligne][colonne+2] == ' '
+                && c[ligne+1][colonne] == '|' && c[ligne+1][colonne+1] == ' ' && c[ligne+1][colonne+2] == '|'
+                && c[ligne+2][colonne] == '|' && c[ligne+2][colonne+1] == '_' && c[ligne+2][colonne+2] == '|'){
             return true;
         }
         return false;
     }
-
-    public static int getPlaceInArray(int colonne){
-        if(colonne >=0 && colonne <=3){
-            return 0;
-        }
-        if(colonne >=4 && colonne <=6){
-            return 1;
-        }
-        if(colonne >=7 && colonne <=9){
-            return 2;
-        }
-        if(colonne >=10 && colonne <=12){
-            return 3;
-        }
-        if(colonne >=13 && colonne <=15){
-            return 4;
-        }
-        if(colonne >=16 && colonne <=18){
-            return 5;
-        }
-        if(colonne >=19 && colonne <=21){
-            return 6;
-        }
-        if(colonne >=22 && colonne <=23){
-            return 7;
-        }
-        if(colonne >=24 && colonne <=27){
-            return 8;
-        }
-        return -1;
-    }
-
-    public static boolean checkIfArrayPlaceIsEmpty(int[] resultArray,int colonne){
-        int placeToCheck = getPlaceInArray(colonne);
-        if(placeToCheck > 0){
-            if(resultArray[placeToCheck] == -1){
-                return true;
-            }
-        }
-        return false;
-    }
 }
-/*
-  0 < 1er nombre < 3
-  4 < 2e nombre < 6
-  7 < 3e nombre < 9
-  10 < 4e nombre < 12
-  13 < 5e nombre < 15
-  16 < 6e nombre < 18
-  19 < 7e nombre < 21
-  22 < 8e nombre < 24
-  25 < 9e nombre < 27
-*/
