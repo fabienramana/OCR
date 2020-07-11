@@ -10,9 +10,9 @@ public class RecognizeNumber {
         this.resultArray = new ArrayList<>();
     }
     
-    public void recognizeNumberFromArray(char[][] myArray, int lignSize){
-        for(int i = 0;i<lignSize;i++){
-            for(int j=0;j<29;j++){
+    public void recognizeNumberFromArray(char[][] myArray){
+        for(int i = 0;i<myArray.length;i++){
+            for(int j=0;j<myArray[0].length;j++){
                 if(i==0 || i%4 == 0) {
                     if (j == 27) {
                         continue;

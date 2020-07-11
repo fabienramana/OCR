@@ -6,14 +6,14 @@ import java.util.List;
 
 public class Main { 
     public static void main(String[] args) {
-        String pathname = "src/main/java/com/cleancode/OCR/input4.txt";
+        String pathname = "";
         try {
             OCRFile ocr = new OCRFile(pathname);
             
             char[][] myArray = ocr.initArrayFromFile();
 
             RecognizeNumber rn = new RecognizeNumber();
-            rn.recognizeNumberFromArray(myArray,ocr.getFileLignSize());
+            rn.recognizeNumberFromArray(myArray);
             ocr.writeResultFile(rn.resultArray);
         } catch (Exception e) {
             System.out.println("An error occurred.");
